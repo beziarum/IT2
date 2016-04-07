@@ -496,9 +496,34 @@ Automate *automate_accessible( const Automate * automate ){
 	A_FAIRE_RETURN( NULL ); 
 }
 
+
+void echange_sens_transition(int origine, char lettre, int fin, void* data )
+{
+    Table* transitions=(Table*) data;
+    Cle cle;
+    initialiser_cle( &cle, fin, lettre );
+    Table_iterateur it = trouver_table( transitions, (intptr_t) &cle );
+    Ensemble * ens;
+    if( iterateur_est_vide( it ) ){
+	ens = creer_ensemble( NULL, NULL, NULL );
+	add_table( transitions, (intptr_t) &cle, (intptr_t) ens );
+    }else{
+	ens = (Ensemble*) get_valeur( it );
+    }
+    ajouter_element( ens, origine );
+}
+
 Automate *miroir( const Automate * automate){
-    swap_ensemble(automate->initiaux,automate->finaux);
-	A_FAIRE_RETURN( NULL ); 
+    Automate* automate2=copier_automate(automate);
+    swap_ensemble(automate2->initiaux,automate2->finaux);
+    Table* t=creer_table(
+		( int(*)(const intptr_t, const intptr_t) ) comparer_cle , 
+		( intptr_t (*)( const intptr_t ) ) copier_cle,
+		( void(*)(intptr_t) ) supprimer_cle);
+    pour_toute_transition(automate2,echange_sens_transition,t);
+    liberer_table(automate2->transitions);
+    automate2->transitions=t;
+    return automate2;
 }
 
 Automate * creer_automate_du_melange(
