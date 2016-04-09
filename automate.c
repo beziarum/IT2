@@ -41,7 +41,7 @@ void action_get_max_etat(const intptr_t element, void* data){
 	*max=element;
 }
 int get_max_etat( const Automate* automate ){
-    int max = 0;
+    int max = INT_MIN;
     pour_tout_element( automate->etats, action_get_max_etat, &max);
     return max;
 }
@@ -536,9 +536,36 @@ Automate *miroir( const Automate * automate){
     return automate2;
 }
 
+struct adhoc
+{
+    int nbEtats1;
+    int nbEtats2;
+    Automate* automateRet;
+};
+//void ajouter_transition_automate(int origine, char lettre,int fin, void* data)
+void dupliquer_transition(int origine, char lettre, int fin, void* data)
+{
+    struct adhoc *strct=(struct adhoc*)data;
+    int nbEtats1=strct->nbEtats1;
+    int nbEtats2=strct->nbEtats2;
+    Automate* automate=strct->automateRet;
+    for(int i=0;i<nbEtats2;i++)
+	ajouter_transition(automate,origine*nbEtats1+i,lettre,fin*nbEtats1+i);
+}
+
 Automate * creer_automate_du_melange(
 	const Automate* automate_1,  const Automate* automate_2
 ){
-	A_FAIRE_RETURN( NULL ); 
+    Automate* automate_tmp;//ne sera utilisé que pour pouvoir libérer les automates intermédiaires
+    Automate* automate_ret=creer_automate();
+    for(int i=0;i<get_max_etat(automate_2);i++)
+    {
+	automate_tmp=creer_union_des_automates(automate_ret,automate_1);
+	liberer_automate(automate_ret);
+	automate_ret=automate_tmp;
+    }
+    struct adhoc a={get_max_etat(automate_1),get_max_etat(automate_2),automate_ret};
+    pour_toute_transition(automate_2,dupliquer_transition,&a);
+    return automate_ret;
 }
 
