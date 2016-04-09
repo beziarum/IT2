@@ -483,11 +483,14 @@ void ajouter_transition_automate(int origine, char lettre,int fin, void* data)
     Automate* automate=(Automate*)data;
     ajouter_transition(automate,origine,lettre,fin);
 }
+
 Automate * creer_union_des_automates(
 	const Automate * automate_1, const Automate * automate_2
 ){
     Automate* automate_3=translater_automate(automate_1,automate_2);
     pour_toute_transition(automate_2,ajouter_transition_automate,automate_3);
+    ajouter_elements(automate_3->initiaux,automate_2->initiaux);
+    ajouter_elements(automate_3->finaux,automate_2->finaux);
     return automate_3;
 }
 
